@@ -17,6 +17,7 @@ pipeline {
                             sonar-scanner \
                               -Dsonar.projectKey=MapReducePython \
                               -Dsonar.sources=. \
+                              -Dsonar.exclusions=**/Python-3.10.13/**,**/venv/** \
                               -Dsonar.login=$SONAR_TOKEN
                         """
                     }
