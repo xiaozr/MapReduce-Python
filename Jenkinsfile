@@ -17,7 +17,7 @@ pipeline {
                 sh '''
                     set -e
 
-                    # Portable Python
+                    # Install portable Python
                     if [ ! -x /tmp/python3/bin/python3 ]; then
                         echo "Installing portable Python..."
                         curl -L https://github.com/indygreg/python-build-standalone/releases/download/20240107/cpython-3.10.13+20240107-x86_64-unknown-linux-gnu-install_only.tar.gz -o python.tar.gz
@@ -30,7 +30,7 @@ pipeline {
                     python3 -m ensurepip
                     pip3 install --upgrade pip
 
-                    # gcloud CLI
+                    # Install gcloud CLI
                     if [ ! -x /tmp/google-cloud-sdk/bin/gcloud ]; then
                         echo "Installing gcloud CLI..."
                         curl -sS https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-456.0.0-linux-x86_64.tar.gz -o gcloud.tar.gz
@@ -50,7 +50,7 @@ pipeline {
         stage('Install Requirements') {
             steps {
                 sh '''
-                    export PATH=${CUSTOM_PATH}:$PATH
+                    export PATH="$CUSTOM_PATH:$PATH"
                     pip3 install -r requirements.txt || true
                     pip3 install coverage
                 '''
@@ -60,7 +60,7 @@ pipeline {
         stage('Run Unit Tests & Generate Coverage') {
             steps {
                 sh '''
-                    export PATH=${CUSTOM_PATH}:$PATH
+                    export PATH="$CUSTOM_PATH:$PATH"
                     coverage run -m unittest discover || true
                     coverage xml || true
                 '''
@@ -73,7 +73,7 @@ pipeline {
                     script {
                         def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                         sh """
-                            export PATH=${scannerHome}/bin:${CUSTOM_PATH}:\$PATH
+                            export PATH=${scannerHome}/bin:$CUSTOM_PATH:\$PATH
                             sonar-scanner \
                               -Dsonar.projectKey=MapReducePython \
                               -Dsonar.sources=. \
@@ -100,10 +100,10 @@ pipeline {
         stage('Upload to GCS') {
             steps {
                 sh '''
-                    export PATH=${CUSTOM_PATH}:$PATH
-                    gcloud auth activate-service-account --key-file=${SA_KEY}
-                    gsutil cp main.py gs://${BUCKET}/scripts/main.py
-                    gsutil cp input.txt gs://${BUCKET}/input/input.txt
+                    export PATH="$CUSTOM_PATH:$PATH"
+                    gcloud auth activate-service-account --key-file="$SA_KEY"
+                    gsutil cp main.py gs://$BUCKET/scripts/main.py
+                    gsutil cp input.txt gs://$BUCKET/input/input.txt
                 '''
             }
         }
@@ -111,13 +111,13 @@ pipeline {
         stage('Trigger Dataproc Job') {
             steps {
                 sh '''
-                    export PATH=${CUSTOM_PATH}:$PATH
-                    gcloud auth activate-service-account --key-file=${SA_KEY}
-                    gcloud dataproc jobs submit pyspark gs://${BUCKET}/scripts/main.py \
-                        --cluster=${CLUSTER} \
-                        --region=${REGION} \
-                        --project=${PROJECT_ID} \
-                        -- gs://${BUCKET}/input/input.txt gs://${BUCKET}/output
+                    export PATH="$CUSTOM_PATH:$PATH"
+                    gcloud auth activate-service-account --key-file="$SA_KEY"
+                    gcloud dataproc jobs submit pyspark gs://$BUCKET/scripts/main.py \
+                        --cluster=$CLUSTER \
+                        --region=$REGION \
+                        --project=$PROJECT_ID \
+                        -- gs://$BUCKET/input/input.txt gs://$BUCKET/output
                 '''
             }
         }
@@ -125,9 +125,9 @@ pipeline {
         stage('Display Output') {
             steps {
                 sh '''
-                    export PATH=${CUSTOM_PATH}:$PATH
+                    export PATH="$CUSTOM_PATH:$PATH"
                     mkdir -p output
-                    gsutil cp gs://${BUCKET}/output/* ./output/
+                    gsutil cp gs://$BUCKET/output/* ./output/
                     echo "===== Hadoop Job Output ====="
                     cat ./output/* | tee ./output/result.txt
                 '''
@@ -136,6 +136,12 @@ pipeline {
                 always {
                     archiveArtifacts artifacts: 'output/result.txt', fingerprint: true
                 }
+            }
+        }
+
+        stage('Success Marker') {
+            steps {
+                echo '✅ Pipeline completed successfully!'
             }
         }
     }
