@@ -47,25 +47,25 @@ pipeline {
             }
         }
 
-        // stage('Install Requirements') {
-        //     steps {
-        //         sh '''
-        //             export PATH="$CUSTOM_PATH:$PATH"
-        //             pip3 install -r requirements.txt || true
-        //             pip3 install coverage
-        //         '''
-        //     }
-        // }
+        stage('Install Requirements') {
+            steps {
+                sh '''
+                    export PATH="$CUSTOM_PATH:$PATH"
+                    pip3 install -r requirements.txt || true
+                    pip3 install coverage
+                '''
+            }
+        }
 
-        // stage('Run Unit Tests & Generate Coverage') {
-        //     steps {
-        //         sh '''
-        //             export PATH="$CUSTOM_PATH:$PATH"
-        //             coverage run -m unittest discover || true
-        //             coverage xml || true
-        //         '''
-        //     }
-        // }
+        stage('Run Unit Tests & Generate Coverage') {
+            steps {
+                sh '''
+                    export PATH="$CUSTOM_PATH:$PATH"
+                    coverage run -m unittest discover || true
+                    coverage xml || true
+                '''
+            }
+        }
 
         // stage('SonarQube Analysis') {
         //     steps {
@@ -73,13 +73,11 @@ pipeline {
         //             script {
         //                 def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
         //                 sh """
-        //                     export PATH=${scannerHome}/bin:$CUSTOM_PATH:\$PATH
+        //                     export PATH=${scannerHome}/bin:\$PATH
         //                     sonar-scanner \
         //                       -Dsonar.projectKey=MapReducePython \
         //                       -Dsonar.sources=. \
-        //                       -Dsonar.inclusions=**/*.py \
         //                       -Dsonar.exclusions=**/Python-3.10.13/**,**/venv/** \
-        //                       -Dsonar.python.coverage.reportPaths=coverage.xml \
         //                       -Dsonar.login=$SONAR_TOKEN
         //                 """
         //             }
@@ -93,11 +91,13 @@ pipeline {
                     script {
                         def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                         sh """
-                            export PATH=${scannerHome}/bin:\$PATH
+                            export PATH=${scannerHome}/bin:$CUSTOM_PATH:\$PATH
                             sonar-scanner \
                               -Dsonar.projectKey=MapReducePython \
                               -Dsonar.sources=. \
+                              -Dsonar.inclusions=**/*.py \
                               -Dsonar.exclusions=**/Python-3.10.13/**,**/venv/** \
+                              -Dsonar.python.coverage.reportPaths=coverage.xml \
                               -Dsonar.login=$SONAR_TOKEN
                         """
                     }
@@ -105,15 +105,15 @@ pipeline {
             }
         }
 
-        // stage('Check Quality Gate') {
-        //     steps {
-        //         catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-        //             timeout(time: 2, unit: 'MINUTES') {
-        //                 waitForQualityGate abortPipeline: false
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Check Quality Gate') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    timeout(time: 2, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: false
+                    }
+                }
+            }
+        }
 
         stage('Upload to GCS') {
             steps {
