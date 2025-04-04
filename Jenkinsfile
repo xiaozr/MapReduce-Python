@@ -1,27 +1,35 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.10'
-            args '-u root:root'
-        }
-    }
+    agent any
 
     environment {
         SONAR_TOKEN = credentials('sonar-token')
     }
 
     stages {
-        stage('Clone') {
+        stage('Install Python & pip') {
             steps {
-                git 'https://github.com/xiaozr/MapReduce-Python.git'
+                sh '''
+                    if ! command -v python3 &> /dev/null; then
+                        echo "Installing Python3..."
+                        sudo apt-get update
+                        sudo apt-get install -y python3
+                    fi
+
+                    if ! command -v pip3 &> /dev/null; then
+                        echo "Installing pip3..."
+                        sudo apt-get install -y python3-pip
+                    fi
+
+                    python3 -m pip install --upgrade pip
+                '''
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    pip install -r requirements.txt || true
-                    pip install coverage
+                    pip3 install -r requirements.txt || true
+                    pip3 install coverage
                 '''
             }
         }
@@ -60,9 +68,5 @@ pipeline {
                 }
             }
         }
-    }
-
-    triggers {
-        githubPush()
     }
 }
