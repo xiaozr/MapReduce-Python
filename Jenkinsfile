@@ -47,15 +47,15 @@ pipeline {
             }
         }
 
-        stage('Install Requirements') {
-            steps {
-                sh '''
-                    export PATH="$CUSTOM_PATH:$PATH"
-                    pip3 install -r requirements.txt || true
-                    pip3 install coverage
-                '''
-            }
-        }
+        // stage('Install Requirements') {
+        //     steps {
+        //         sh '''
+        //             export PATH="$CUSTOM_PATH:$PATH"
+        //             pip3 install -r requirements.txt || true
+        //             pip3 install coverage
+        //         '''
+        //     }
+        // }
 
         // stage('Run Unit Tests & Generate Coverage') {
         //     steps {
