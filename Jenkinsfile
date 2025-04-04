@@ -10,7 +10,7 @@ pipeline {
         SA_KEY = '/var/jenkins_home/gcloud-sa-key.json'
         CUSTOM_PATH = '/tmp/python3/bin:/tmp/google-cloud-sdk/bin'
     }
-
+ 
     stages {
         stage('Install Python + gcloud CLI') {
             steps {
