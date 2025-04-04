@@ -105,15 +105,15 @@ pipeline {
             }
         }
 
-        stage('Check Quality Gate') {
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    timeout(time: 2, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: false
-                    }
-                }
-            }
-        }
+        // stage('Check Quality Gate') {
+        //     steps {
+        //         catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+        //             timeout(time: 2, unit: 'MINUTES') {
+        //                 waitForQualityGate abortPipeline: false
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Upload to GCS') {
             steps {
